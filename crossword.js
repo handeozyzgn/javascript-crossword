@@ -8,18 +8,6 @@ var host = 'http://localhost:3000/';
  * Functions
  */
 
-function populatePuzzleSelection() {
-  var puzzles = [];
-  // TODO: we need to fetch all the .json files and put them in the puzzles array.
-  $.getJSON(host + 'puzzles/IFT3225.json', function(data) {
-    puzzles.push(data);
-    $('select').append('<option value="0">' + data.author + '</option>');
-    buildCrosswordTable(puzzles[0]);
-  });
-
-  return puzzles;
-}
-
 function buildCrosswordTable(puzzle) {
   var diagram = puzzle.diagram;
   var rows = puzzle.nRows;
@@ -33,18 +21,33 @@ function buildCrosswordTable(puzzle) {
   numbering */
   for (i = 0; i < rows + 1; i++) {
     $newRow = $('<tr></tr>');
-    if (i > 0) {
-      $newRow.append('<th>' + i.toString() + '</th>');
-    }
     for (j = 0; j < cols + 1; j++) {
-      if (i === 0 && j > 0) {
+      if (i === 0 && j === 0) {
+        $newRow.append('<th></th>');
+      } else if (i === 0) { // On the first row we number the columns
         $newRow.append('<th>' + j.toString() + '</th>');
-      } else {
-        $newRow.append('<td></td>');
+      } else if (i > 0 && j === 0) { //On the first column we number the rows
+        $newRow.append('<th>' + i.toString() + '</th>');
+      } else { //Then we just add the boxes
+        $newRow.append('<td contentEditable="true"></td>');
       }
     }
     $newRow.appendTo($crosswordTable);
   }
+}
+
+function populatePuzzleSelection() {
+  var puzzles = [];
+
+  // TODO: we need to fetch all the .json files and put them in the puzzles array.
+
+  $.getJSON(host + 'puzzles/IFT3225.json', function(data) {
+    puzzles.push(data);
+    $('select').append('<option value="0">' + data.author + '</option>');
+    buildCrosswordTable(puzzles[0]);
+  });
+
+  return puzzles;
 }
 
 function keyPressed() {

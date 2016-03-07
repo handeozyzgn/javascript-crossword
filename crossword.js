@@ -5,10 +5,14 @@
 var host = 'http://localhost:3000/';
 var board = [];
 var puzzles = [];
+var selectedPuzzle;
 
 /*
  * Functions
  */
+function initCrossword() {
+  getPuzzleFileList();
+}
 
 function buildCrosswordTable(puzzle) {
   var rows = puzzle.nRows;
@@ -33,8 +37,12 @@ function buildCrosswordTable(puzzle) {
         $newRow.append('<th>' + j + '</th>');
       } else if (i > 0 && j === 0) { // On the first column we number the rows
         $newRow.append('<th>' + i + '</th>');
-      } else { // Then we just add the boxes
-        $newRow.append('<td id="' + id + '" contentEditable="true"></td>');
+      } else { // Then we just add the crossword puzzle boxes
+        var $td = $('<td id="' + id + '" class="' + 'row-' + (i - 1) + ' col-' + (j - 1) + '" contentEditable="true"></td>').appendTo($newRow);
+        if (board[i-1][j-1] === ".") {
+          $td.addClass('blacked-out');
+          $td.attr('contentEditable', 'false')
+        }
       }
     }
     $newRow.appendTo($crosswordTable);
@@ -74,8 +82,14 @@ function keyPressed() {
  */
 
 $(document).ready(function() {
-  getPuzzleFileList();
+  initCrossword();
+
+/*
+* Setting up event handlers
+*/
+
   $('select').change(function(event) {
-    buildCrosswordTable(puzzles[event.target.value]);
+    selectedPuzzle = puzzles[event.target.value];
+    buildCrosswordTable(selectedPuzzle);
   });
 });

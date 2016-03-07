@@ -10,3 +10,11 @@ th {
 td {
     border: 1px solid grey;
 }
+
+.blacked-out {
+    background: black;
+}
+
+.focused {
+    background: yellow;
+}

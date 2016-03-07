@@ -11,7 +11,12 @@ var selectedPuzzle;
  * Functions
  */
 function initCrossword() {
-  getPuzzleFileList();
+  var files = [];
+  // Fetch all the json files from our server
+  $.getJSON(host + 'puzzles/puzzle-list.json', function(data) {
+    files = data.files;
+    populatePuzzleSelection(files);
+  });
 }
 
 function buildCrosswordTable(puzzle) {
@@ -39,7 +44,7 @@ function buildCrosswordTable(puzzle) {
         $newRow.append('<th>' + i + '</th>');
       } else { // Then we just add the crossword puzzle boxes
         var $td = $('<td id="' + id + '" class="' + 'row-' + (i - 1) + ' col-' + (j - 1) + '" contentEditable="true"></td>').appendTo($newRow);
-        if (board[i-1][j-1] === ".") {
+        if (board[i - 1][j - 1] === ".") {
           $td.addClass('blacked-out');
           $td.attr('contentEditable', 'false')
         }
@@ -47,15 +52,6 @@ function buildCrosswordTable(puzzle) {
     }
     $newRow.appendTo($crosswordTable);
   }
-}
-
-function getPuzzleFileList() {
-  var files = [];
-
-  $.getJSON(host + 'puzzles/puzzle-list.json', function(data) {
-    files = data.files;
-    populatePuzzleSelection(files);
-  });
 }
 
 function populatePuzzleSelection(files) {
@@ -67,10 +63,36 @@ function populatePuzzleSelection(files) {
       puzzles.push(data);
       var $select = $('select').append('<option value="' + i + '">' + file.split('.')[0] + '</option>');
       if (i === 0) {
-        buildCrosswordTable(puzzles[$select.val()]);
+        selectedPuzzle = puzzles[$select.val()];
+        buildCrosswordTable(selectedPuzzle);
+        populateClues();
       }
     });
   });
+}
+
+function populateClues() {
+  var tableHeight = $('#crossword').height();
+  $('#horizontal').css('height', tableHeight);
+  $('#vertical').css('height', tableHeight);
+  var $horClueList = $('#horizontal-clues ul')
+  var $vertClueList = $('#vertical-clues ul')
+
+  for (var i = 0; i < selectedPuzzle.nRows; i++) {
+    for (var j = 0; j < selectedPuzzle.nCols; j++) {
+      var clue = selectedPuzzle.numbers[i][j];
+
+      if (selectedPuzzle.acrossClues[clue]) {
+        $horClueList.append('<li>' + selectedPuzzle.acrossClues[clue] + '</li>');
+      }
+      if (selectedPuzzle.downClues[clue]) {
+        $vertClueList.append('<li>' + selectedPuzzle.downClues[clue] + '</li>');
+      }
+
+    }
+  }
+
+
 }
 
 function keyPressed() {
@@ -84,9 +106,9 @@ function keyPressed() {
 $(document).ready(function() {
   initCrossword();
 
-/*
-* Setting up event handlers
-*/
+  /*
+   * Setting up event handlers
+   */
 
   $('select').change(function(event) {
     selectedPuzzle = puzzles[event.target.value];

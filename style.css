@@ -3,11 +3,26 @@ td, th {
     height: 30px;
 }
 
-th {
-    padding: 0;
+td {
+    border: 1px solid grey;
 }
 
-td {
+div {
+    display: inline-block;
+    box-sizing: border-box;
+}
+
+table {
+    display: inline-block;
+    padding: 0;
+    margin: 0;
+}
+
+#horizontal, #vertical {
+    width: 300px;
+}
+
+#horizontal-clues, #vertical-clues {
     border: 1px solid grey;
 }
 
@@ -15,6 +30,10 @@ td {
     background: black;
 }
 
-.focused {
+.selected-box {
     background: yellow;
+}
+
+.selected-clue {
+
 }

@@ -11,6 +11,11 @@ var selectedPuzzle;
  * Functions
  */
 function initCrossword() {
+  $('select').change(function(event) {
+    selectedPuzzle = puzzles[event.target.value];
+    buildCrosswordTable(selectedPuzzle);
+  });
+
   var files = [];
   // Fetch all the json files from our server
   $.getJSON(host + 'puzzles/puzzle-list.json', function(data) {
@@ -75,8 +80,8 @@ function populateClues() {
   var tableHeight = $('#crossword').height();
   $('#horizontal').css('height', tableHeight);
   $('#vertical').css('height', tableHeight);
-  var $horClueList = $('#horizontal-clues ul')
-  var $vertClueList = $('#vertical-clues ul')
+  var $horClueList = $('#horizontal-clues ul');
+  var $vertClueList = $('#vertical-clues ul');
 
   for (var i = 0; i < selectedPuzzle.nRows; i++) {
     for (var j = 0; j < selectedPuzzle.nCols; j++) {
@@ -88,7 +93,6 @@ function populateClues() {
       if (selectedPuzzle.downClues[clue]) {
         $vertClueList.append('<li>' + selectedPuzzle.downClues[clue] + '</li>');
       }
-
     }
   }
 
@@ -105,13 +109,4 @@ function keyPressed() {
 
 $(document).ready(function() {
   initCrossword();
-
-  /*
-   * Setting up event handlers
-   */
-
-  $('select').change(function(event) {
-    selectedPuzzle = puzzles[event.target.value];
-    buildCrosswordTable(selectedPuzzle);
-  });
 });

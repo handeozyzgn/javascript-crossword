@@ -35,7 +35,7 @@ function buildCrosswordTable(puzzle) {
       } else if (i > 0 && j === 0) { // On the first column we number the rows
         $newRow.append('<th>' + i + '</th>');
       } else { // Then we just add the crossword puzzle boxes
-        elem = '<td id="' + id + '" class="' + 'row-' + (i - 1) + ' col-' + (j - 1) + '" contentEditable="true"></td>';
+        elem = '<td id="' + id + '" class=" row-' + (i - 1) + ' col-' + (j - 1) + '" contentEditable="true"></td>';
         $td = $(elem).appendTo($newRow);
         if (board[i - 1][j - 1] === '.') {
           $td.addClass('blacked-out');

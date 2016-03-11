@@ -98,16 +98,32 @@ function validate() {
   // TODO
 }
 
+/*
+ * Handles puzzle navigation using arrow keys and refocuses on new table cell
+ */
 function move(direction, currentPos) {
-  // TODO
+  var newId;
+
+  if (direction === 'up' && currentPos[0] > 0) {
+    currentPos[0]--;
+  } else if (direction === 'down' && currentPos[0] < selectedPuzzle.nRows - 1) {
+    currentPos[0]++;
+  } else if (direction === 'left' && currentPos[1] > 0) {
+    currentPos[1]--;
+  } else if (direction === 'right' && currentPos[1] < selectedPuzzle.nCols - 1) {
+    currentPos[1]++;
+  }
+  newId = '#' + currentPos.join('-');
+  $(newId).focus();
 }
 
 function keyPressed(event) {
   var $elem = $(this);
-  var position = $elem.attr('id').split("-"); // Position is an array [i index, j index]
+  var position = $elem.attr('id').split('-'); // Position is an array [i index, j index]
+  var key = event.which.toString();
 
   event.preventDefault();
-  switch (event.which) {
+  switch (key) {
     case '38':
       move('up', position);
       break;

@@ -6,6 +6,8 @@ var host = 'http://localhost:3000/';
 var board = []; // Keeps track of the puzzle in memory.
 var puzzles = []; // Holds all the puzzles that are loaded from the server
 var selectedPuzzle; // Holds le JSON file of the current puzzle being solved.
+var clueOrientation = 'h'; // 'h' if we are solving an accross clue and 'v' if it's a down clue
+var currentSelection = '.row-0';
 
 /*
  * Functions
@@ -21,7 +23,11 @@ function buildCrosswordTable(puzzle) {
   var $newRow, $td, elem, id;
 
   $crosswordTable.empty();
-  board = puzzle.diagram; // Set the in memroy board every time we build a new puzzle
+  clueOrientation = 'h';
+  // Set the in memroy board every time we build a new puzzle
+  board = puzzle.diagram.map(function(row) {
+    return row.split('');
+  });
   /* Add 1 to rows and cols because we need an extra row and column for the
   numbering */
   for (i = 0; i < rows + 1; i++) {
@@ -46,6 +52,9 @@ function buildCrosswordTable(puzzle) {
     }
     $newRow.appendTo($crosswordTable);
   }
+  $(currentSelection).addClass('selected');
+  // Put cursor on first puzzle cell for the user;
+  $('#0-0').focus();
 }
 
 /*
@@ -117,11 +126,24 @@ function move(direction, currentPos) {
   $(newId).focus();
 }
 
+function toggleOrientation() {
+  switch (clueOrientation) {
+    case 'h':
+      clueOrientation = 'v';
+      break;
+    case 'v':
+      clueOrientation = 'h';
+      break;
+    default:
+  }
+}
+
 function keyPressed(event) {
   var $elem = $(this);
-  var position = $elem.attr('id').split('-'); // Position is an array [i index, j index]
+  var position = $elem.attr('id').split('-').map(Number); // Position is an array [i index, j index]
   var key = event.which.toString();
 
+  $(currentSelection).removeClass('selected');
   event.preventDefault();
   switch (key) {
     case '38':
@@ -136,8 +158,25 @@ function keyPressed(event) {
     case '39':
       move('right', position);
       break;
+    case '32': // space bar
+      toggleOrientation();
+      break;
     default:
       $elem.text(String.fromCharCode(event.which));
+      board[position[0]][position[1]] = String.fromCharCode(event.which);
+  }
+
+  switch (clueOrientation) {
+    case 'h':
+      currentSelection = '.row-' + position[0];
+      $(currentSelection).addClass('selected');
+      break;
+    case 'v':
+      currentSelection = '.col-' + position[1];
+      $(currentSelection).addClass('selected');
+      break;
+    default:
+
   }
 }
 

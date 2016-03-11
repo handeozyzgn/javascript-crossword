@@ -4,7 +4,7 @@ td, th {
 }
 
 td {
-    border: 1px solid grey;
+    border: 1px solid black;
     font-size: 15pt;
     font-weight: bold;
     text-align: center;
@@ -30,15 +30,19 @@ li {
 }
 
 #horizontal-clues, #vertical-clues {
-    border: 1px solid grey;
+    border: 1px solid black;
 }
 
-.blacked-out {
-    background: black;
+.selected {
+    background-color: grey;
 }
 
 td.selected-box {
     background-color: yellow;
+}
+
+.blacked-out {
+    background: black;
 }
 
 .selected-clue {

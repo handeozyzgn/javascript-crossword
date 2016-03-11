@@ -5,6 +5,9 @@ td, th {
 
 td {
     border: 1px solid grey;
+    font-size: 15pt;
+    font-weight: bold;
+    text-align: center;
 }
 
 div {
@@ -16,6 +19,10 @@ table {
     display: inline-block;
     padding: 0;
     margin: 0;
+}
+
+li {
+    list-style: none;
 }
 
 #horizontal, #vertical {
@@ -30,8 +37,8 @@ table {
     background: black;
 }
 
-.selected-box {
-    background: yellow;
+td.selected-box {
+    background-color: yellow;
 }
 
 .selected-clue {

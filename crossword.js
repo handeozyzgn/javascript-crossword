@@ -3,14 +3,15 @@
  * GLOBAL VARS
  */
 var host = 'http://localhost:3000/';
-var board = [];
-var puzzles = [];
-var selectedPuzzle;
+var board = []; // Keeps track of the puzzle in memory.
+var puzzles = []; // Holds all the puzzles that are loaded from the server
+var selectedPuzzle; // Holds le JSON file of the current puzzle being solved.
 
 /*
  * Functions
  */
 
+/* Called every time a new puzzle is selected */
 function buildCrosswordTable(puzzle) {
   var rows = puzzle.nRows;
   var cols = puzzle.nCols;
@@ -20,7 +21,7 @@ function buildCrosswordTable(puzzle) {
   var $newRow, $td, elem, id;
 
   $crosswordTable.empty();
-  board = puzzle.diagram;
+  board = puzzle.diagram; // Set the in memroy board every time we build a new puzzle
   /* Add 1 to rows and cols because we need an extra row and column for the
   numbering */
   for (i = 0; i < rows + 1; i++) {
@@ -47,6 +48,9 @@ function buildCrosswordTable(puzzle) {
   }
 }
 
+/*
+ * Fills the across and down clues
+ */
 function populateClues() {
   var tableHeight = $('#crossword').height();
   var $horClueList = $('#horizontal-clues ul');
@@ -61,15 +65,18 @@ function populateClues() {
       clue = selectedPuzzle.numbers[i][j];
 
       if (selectedPuzzle.acrossClues[clue]) {
-        $horClueList.append('<li>' + selectedPuzzle.acrossClues[clue] + '</li>');
+        $horClueList.append('<li>' + clue + ': ' + selectedPuzzle.acrossClues[clue] + '</li>');
       }
       if (selectedPuzzle.downClues[clue]) {
-        $vertClueList.append('<li>' + selectedPuzzle.downClues[clue] + '</li>');
+        $vertClueList.append('<li>' + clue + ': ' + selectedPuzzle.downClues[clue] + '</li>');
       }
     }
   }
 }
 
+/*
+ * Fills the list of puzzles the user can select
+ */
 function populatePuzzleSelection(files) {
   var url, $select;
 
@@ -87,8 +94,35 @@ function populatePuzzleSelection(files) {
   });
 }
 
-function keyPressed() {
-  // TODO: Handle the interactions. Helper functions will probably be needed
+function validate() {
+  // TODO
+}
+
+function move(direction, currentPos) {
+  // TODO
+}
+
+function keyPressed(event) {
+  var $elem = $(this);
+  var position = $elem.attr('id').split("-"); // Position is an array [i index, j index]
+
+  event.preventDefault();
+  switch (event.which) {
+    case '38':
+      move('up', position);
+      break;
+    case '40':
+      move('down', position);
+      break;
+    case '37':
+      move('left', position);
+      break;
+    case '39':
+      move('right', position);
+      break;
+    default:
+      $elem.text(String.fromCharCode(event.which));
+  }
 }
 
 function initCrossword() {
@@ -98,12 +132,20 @@ function initCrossword() {
     selectedPuzzle = puzzles[event.target.value];
     buildCrosswordTable(selectedPuzzle);
   });
-
   // Fetch all the json files from our server
   $.getJSON(host + 'puzzles/puzzle-list.json', function(data) {
     files = data.files;
     populatePuzzleSelection(files);
   });
+  $(document).on('focusin', 'td', function() {
+    $(this).addClass('selected-box');
+  });
+  $(document).on('focusout', 'td', function() {
+    $(this).removeClass('selected-box');
+  });
+  /* We use keydown instead of keypress here because we also need to capture the
+  arrow keys which aren't captured with all browsers by using keypress */
+  $(document).on('keydown', 'td', keyPressed);
 }
 
 /*

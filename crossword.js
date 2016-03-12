@@ -8,10 +8,122 @@ var puzzles = []; // Holds all the puzzles that are loaded from the server
 var selectedPuzzle; // Holds le JSON file of the current puzzle being solved.
 var clueOrientation = 'h'; // 'h' if we are solving an accross clue and 'v' if it's a down clue
 var currentSelection = '.row-0';
+var currentClue = '#hclue-1';
 
 /*
- * Functions
+ * Helper Functions
  */
+
+function setStyles(pos) {
+  if (clueOrientation === 'h') {
+    currentSelection = '.row-' + pos[0];
+    $(currentSelection).addClass('selected');
+  } else if (clueOrientation === 'v') {
+    currentSelection = '.col-' + pos[1];
+    $(currentSelection).addClass('selected');
+  }
+}
+
+function getPosition(cellId) {
+  return cellId.split('-').map(Number);
+}
+
+function validate() {
+  // TODO
+}
+
+/*
+ * Handles puzzle navigation using arrow keys and refocuses on new table cell
+ * Returns: false if move was unsuccessful, true otherwise.
+ */
+function move(direction, currentPos) {
+  var newId;
+  var success = false;
+
+  if (direction === 'up' && currentPos[0] > 0) {
+    currentPos[0]--;
+  } else if (direction === 'down' && currentPos[0] < selectedPuzzle.nRows - 1) {
+    currentPos[0]++;
+  } else if (direction === 'left' && currentPos[1] > 0) {
+    currentPos[1]--;
+  } else if (direction === 'right' && currentPos[1] < selectedPuzzle.nCols - 1) {
+    currentPos[1]++;
+  }
+
+  newId = '#' + currentPos.join('-');
+  if (!$(newId).hasClass('blacked-out')) {
+    success = true;
+  }
+
+  return success;
+}
+
+function toggleOrientation(position) {
+  switch (clueOrientation) {
+    case 'h':
+      clueOrientation = 'v';
+      break;
+    case 'v':
+      clueOrientation = 'h';
+      break;
+    default:
+  }
+}
+
+function processKey($elem, position, key) {
+  $elem.text(key);
+  board[position[0]][position[1]] = String.fromCharCode(event.which);
+
+  if (clueOrientation === 'v') {
+    move('down', position);
+  } else if (clueOrientation === 'h') {
+    move('right', position);
+  }
+}
+
+function keyPressed(event) {
+  var $elem = $(this);
+  var position = getPosition($elem.attr('id')); // Position is an array [i index, j index]
+  var key = event.which.toString();
+  var successfulMove;
+
+  $(currentSelection).removeClass('selected');
+  event.preventDefault();
+  switch (key) {
+    case '38':
+      successfulMove = move('up', position);
+      break;
+    case '40':
+      successfulMove = move('down', position);
+      break;
+    case '37':
+      successfulMove = move('left', position);
+      break;
+    case '39':
+      successfulMove = move('right', position);
+      break;
+    case '32': // space bar
+      toggleOrientation(position);
+      break;
+    default:
+      processKey($elem, position, String.fromCharCode(event.which));
+  }
+
+  setStyles(position);
+}
+
+function focused() {
+  var $elem = $(this);
+  var pos = getPosition($elem.attr('id'));
+
+  $elem.addClass('selected-box');
+  setStyles(pos);
+}
+
+/*
+* INITIALIZATION FUNCITONs
+* Functions used to initialize the game, the crossword puzzle and the clues
+*/
 
 /* Called every time a new puzzle is selected */
 function buildCrosswordTable(puzzle) {
@@ -52,7 +164,6 @@ function buildCrosswordTable(puzzle) {
     }
     $newRow.appendTo($crosswordTable);
   }
-  $(currentSelection).addClass('selected');
   // Put cursor on first puzzle cell for the user;
   $('#0-0').focus();
 }
@@ -62,25 +173,28 @@ function buildCrosswordTable(puzzle) {
  */
 function populateClues() {
   var tableHeight = $('#crossword').height();
+  var headingHeight = $('#horizontal h2').height();
   var $horClueList = $('#horizontal-clues ul');
   var $vertClueList = $('#vertical-clues ul');
-  var clue, i, j;
+  var clueNumber, i, j;
 
   $('#horizontal').css('height', tableHeight);
   $('#vertical').css('height', tableHeight);
+  //$('#puzzle-container').css('height', tableHeight);
 
   for (i = 0; i < selectedPuzzle.nRows; i++) {
     for (j = 0; j < selectedPuzzle.nCols; j++) {
-      clue = selectedPuzzle.numbers[i][j];
-
-      if (selectedPuzzle.acrossClues[clue]) {
-        $horClueList.append('<li>' + clue + ': ' + selectedPuzzle.acrossClues[clue] + '</li>');
+      clueNumber = selectedPuzzle.numbers[i][j];
+      if (selectedPuzzle.acrossClues[clueNumber]) {
+        $horClueList.append('<li id="hclue-' + clueNumber + '">' + clueNumber + ': ' + selectedPuzzle.acrossClues[clueNumber] + '</li>');
       }
-      if (selectedPuzzle.downClues[clue]) {
-        $vertClueList.append('<li>' + clue + ': ' + selectedPuzzle.downClues[clue] + '</li>');
+      if (selectedPuzzle.downClues[clueNumber]) {
+        $vertClueList.append('<li id="vclue-' + clueNumber + '">' + clueNumber + ': ' + selectedPuzzle.downClues[clueNumber] + '</li>');
       }
     }
   }
+
+  $(currentClue).addClass('selected-clue');
 }
 
 /*
@@ -103,83 +217,6 @@ function populatePuzzleSelection(files) {
   });
 }
 
-function validate() {
-  // TODO
-}
-
-/*
- * Handles puzzle navigation using arrow keys and refocuses on new table cell
- */
-function move(direction, currentPos) {
-  var newId;
-
-  if (direction === 'up' && currentPos[0] > 0) {
-    currentPos[0]--;
-  } else if (direction === 'down' && currentPos[0] < selectedPuzzle.nRows - 1) {
-    currentPos[0]++;
-  } else if (direction === 'left' && currentPos[1] > 0) {
-    currentPos[1]--;
-  } else if (direction === 'right' && currentPos[1] < selectedPuzzle.nCols - 1) {
-    currentPos[1]++;
-  }
-  newId = '#' + currentPos.join('-');
-  $(newId).focus();
-}
-
-function toggleOrientation() {
-  switch (clueOrientation) {
-    case 'h':
-      clueOrientation = 'v';
-      break;
-    case 'v':
-      clueOrientation = 'h';
-      break;
-    default:
-  }
-}
-
-function keyPressed(event) {
-  var $elem = $(this);
-  var position = $elem.attr('id').split('-').map(Number); // Position is an array [i index, j index]
-  var key = event.which.toString();
-
-  $(currentSelection).removeClass('selected');
-  event.preventDefault();
-  switch (key) {
-    case '38':
-      move('up', position);
-      break;
-    case '40':
-      move('down', position);
-      break;
-    case '37':
-      move('left', position);
-      break;
-    case '39':
-      move('right', position);
-      break;
-    case '32': // space bar
-      toggleOrientation();
-      break;
-    default:
-      $elem.text(String.fromCharCode(event.which));
-      board[position[0]][position[1]] = String.fromCharCode(event.which);
-  }
-
-  switch (clueOrientation) {
-    case 'h':
-      currentSelection = '.row-' + position[0];
-      $(currentSelection).addClass('selected');
-      break;
-    case 'v':
-      currentSelection = '.col-' + position[1];
-      $(currentSelection).addClass('selected');
-      break;
-    default:
-
-  }
-}
-
 function initCrossword() {
   var files = [];
 
@@ -187,25 +224,23 @@ function initCrossword() {
     selectedPuzzle = puzzles[event.target.value];
     buildCrosswordTable(selectedPuzzle);
   });
+
   // Fetch all the json files from our server
   $.getJSON(host + 'puzzles/puzzle-list.json', function(data) {
     files = data.files;
     populatePuzzleSelection(files);
   });
-  $(document).on('focusin', 'td', function() {
-    $(this).addClass('selected-box');
-  });
+
+  $(document).on('focusin', 'td', focused);
+
   $(document).on('focusout', 'td', function() {
     $(this).removeClass('selected-box');
+    $(currentSelection).removeClass('selected');
   });
   /* We use keydown instead of keypress here because we also need to capture the
   arrow keys which aren't captured with all browsers by using keypress */
   $(document).on('keydown', 'td', keyPressed);
 }
-
-/*
- * MAIN
- */
 
 $(document).ready(function() {
   initCrossword();

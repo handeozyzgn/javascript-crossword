@@ -2,49 +2,46 @@ td, th {
     width: 30px;
     height: 30px;
 }
-
 td {
     border: 1px solid black;
     font-size: 15pt;
     font-weight: bold;
     text-align: center;
 }
-
 div {
     display: inline-block;
     box-sizing: border-box;
 }
-
 table {
     display: inline-block;
     padding: 0;
     margin: 0;
 }
-
 li {
     list-style: none;
 }
-
+ul {
+    padding: 5px;
+}
 #horizontal, #vertical {
     width: 300px;
+    height: 100%
+    position: relative;
 }
-
 #horizontal-clues, #vertical-clues {
     border: 1px solid black;
+    overflow: scroll;
 }
-
+#puzzle-container {
+    position: relative;
+}
 .selected {
     background-color: grey;
 }
-
-td.selected-box {
+td.selected-box, .selected-clue {
     background-color: yellow;
 }
-
 .blacked-out {
     background: black;
 }
-
-.selected-clue {
-
-}
+.solved-clue {}

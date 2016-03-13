@@ -2,26 +2,102 @@
 /*
  * GLOBAL VARS
  */
-var host = 'http://localhost:3000/';
-var board = []; // Keeps track of the puzzle in memory.
-var puzzles = []; // Holds all the puzzles that are loaded from the server
-var selectedPuzzle; // Holds le JSON file of the current puzzle being solved.
-var clueOrientation = 'h'; // 'h' if we are solving an accross clue and 'v' if it's a down clue
-var currentSelection = '.row-0'; // The row or column currently selected
-var currentClue = '#hclue-1';
+var state = {
+  host: 'http://localhost:3000/',
+  board: [], // Keeps track of the puzzle in memory.
+  puzzles: [], // Holds all the puzzles that are loaded from the server
+  selectedPuzzle: null, // Holds le JSON file of the current puzzle being solved.
+  orientation: 'h', // 'h' if we are solving an accross clue and 'v' if it's a down clue
+  selectedCell: null, // The row or column currently selected
+  selectedClue: null
+}
 
 /*
  * Helper Functions
  */
+ /*
+ * Looks up the clue number and returns an object containing the clue number and it's i-j index.
+ * The reason if for reusability of the function (see: semiSelectWord())
+ */
+ function lookUpClueNumber($elem) {
+   var i, j, num;
+   var elemRow = $elem.attr('id').split('_')[1];
+   var elemCol = $elem.attr('id').split('_')[2];
+   var number = state.selectedPuzzle.numbers;
+   var hclues = state.selectedPuzzle.acrossClues;
+   var vclues = state.selectedPuzzle.downClues;
 
-function setStyles(pos) {
-  if (clueOrientation === 'h') {
-    currentSelection = '.row-' + pos[0];
-    $(currentSelection).addClass('selected');
-  } else if (clueOrientation === 'v') {
-    currentSelection = '.col-' + pos[1];
-    $(currentSelection).addClass('selected');
+   if (state.orientation === 'h') {
+     for (j = elemCol; j >= 0; j--) {
+       // Find first number, it will indicate the clue index we want
+       num = number[elemRow][j];
+       if (state.selectedPuzzle.diagram[elemRow][j] === '.') {
+         return null;
+       }
+       if (num > 0 && hclues[num]) {
+         return {
+           number: num,
+           i: elemRow,
+           j: j
+         };
+       }
+     }
+   } else if (state.orientation === 'v') {
+     for (i = elemRow; i >= 0; i--) {
+       // Find first number, it will indicate the clue index we want
+       num = number[i][elemCol];
+       if (state.selectedPuzzle.diagram[i][elemCol] === '.') {
+         return null;
+       }
+       if (num > 0 && vclues[num]) {
+         return {
+           number: num,
+           i: i,
+           j: elemCol
+         };
+       }
+     }
+   }
+   return null;
+ }
+
+function semiSelectWord($elem) {
+  var clueNumber = lookUpClueNumber($elem);
+  var row = clueNumber ? clueNumber.i + 1 : null;
+  var col = clueNumber ? clueNumber.j + 1 : null;
+  var nCols = state.selectedPuzzle.nCols;
+  var nRows = state.selectedPuzzle.nRows;
+  var i, id;
+
+  if (!row || !col) {
+    return;
   }
+
+  if (state.orientation === 'h') {
+    // Then we want to semi-select the whole row starting from the var row until we meet a blacked out cell
+    for (i = col; i <= nCols; i++) {
+      id = '#case_' + row + '_' + i;
+      if ($(id).hasClass('noLetter')) {
+        return;
+      }
+      $(id).addClass('semiSelected');
+    }
+  } else if (state.orientation === 'v') {
+    // Then we want to to semi-select the whole column starting from col until we meet a blacked out cell
+    for (i = row; i <= nRows; i++) {
+      id = '#case_' + i + '_' + col;
+      if ($(id).hasClass('noLetter')) {
+        return;
+      }
+      $(id).addClass('semiSelected');
+    }
+  }
+}
+
+function setStyles($elem) {
+  $elem.addClass('selected');
+  $('.semiSelected').removeClass('semiSelected');
+  semiSelectWord($elem);
 }
 
 function getPosition(cellId) {
@@ -130,9 +206,9 @@ function focused() {
 }
 
 /*
-* INITIALIZATION FUNCITONs
-* Functions used to initialize the game, the crossword puzzle and the clues
-*/
+ * INITIALIZATION FUNCITONs
+ * Functions used to initialize the game, the crossword puzzle and the clues
+ */
 
 /* Called every time a new puzzle is selected */
 function buildCrosswordTable(puzzle) {

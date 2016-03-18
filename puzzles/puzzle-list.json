@@ -1,7 +1,11 @@
 {
-    "files": [
-        "IFT3225.json",
-        "easy2.json",
-        "moyenne1.json"
-    ]
+  "files": [
+    "IFT3225.json",
+    "easy2.json",
+    "moyenne1.json",
+    "moyenne2.json",
+    "HC-0001.json",
+    "HC-0002.json",
+    "corsee5.json"
+  ]
 }

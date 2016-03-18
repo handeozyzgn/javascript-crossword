@@ -10,56 +10,56 @@ var state = {
   orientation: 'h', // 'h' if we are solving an accross clue and 'v' if it's a down clue
   selectedCell: null, // The row or column currently selected
   selectedClue: null
-}
+};
 
 /*
  * Helper Functions
  */
- /*
+/*
  * Looks up the clue number and returns an object containing the clue number and it's i-j index.
  * The reason if for reusability of the function (see: semiSelectWord())
  */
- function lookUpClueNumber($elem) {
-   var i, j, num;
-   var elemRow = $elem.attr('id').split('_')[1];
-   var elemCol = $elem.attr('id').split('_')[2];
-   var number = state.selectedPuzzle.numbers;
-   var hclues = state.selectedPuzzle.acrossClues;
-   var vclues = state.selectedPuzzle.downClues;
+function lookUpClueNumber($elem) {
+  var i, j, num;
+  var elemRow = $elem.attr('id').split('_')[1];
+  var elemCol = $elem.attr('id').split('_')[2];
+  var number = state.selectedPuzzle.numbers;
+  var hclues = state.selectedPuzzle.acrossClues;
+  var vclues = state.selectedPuzzle.downClues;
 
-   if (state.orientation === 'h') {
-     for (j = elemCol; j >= 0; j--) {
-       // Find first number, it will indicate the clue index we want
-       num = number[elemRow][j];
-       if (state.selectedPuzzle.diagram[elemRow][j] === '.') {
-         return null;
-       }
-       if (num > 0 && hclues[num]) {
-         return {
-           number: num,
-           i: elemRow,
-           j: j
-         };
-       }
-     }
-   } else if (state.orientation === 'v') {
-     for (i = elemRow; i >= 0; i--) {
-       // Find first number, it will indicate the clue index we want
-       num = number[i][elemCol];
-       if (state.selectedPuzzle.diagram[i][elemCol] === '.') {
-         return null;
-       }
-       if (num > 0 && vclues[num]) {
-         return {
-           number: num,
-           i: i,
-           j: elemCol
-         };
-       }
-     }
-   }
-   return null;
- }
+  if (state.orientation === 'h') {
+    for (j = elemCol; j >= 0; j--) {
+      // Find first number, it will indicate the clue index we want
+      num = number[elemRow][j];
+      if (state.selectedPuzzle.diagram[elemRow][j] === '.') {
+        return null;
+      }
+      if (num > 0 && hclues[num]) {
+        return {
+          number: num,
+          i: elemRow,
+          j: j
+        };
+      }
+    }
+  } else if (state.orientation === 'v') {
+    for (i = elemRow; i >= 0; i--) {
+      // Find first number, it will indicate the clue index we want
+      num = number[i][elemCol];
+      if (state.selectedPuzzle.diagram[i][elemCol] === '.') {
+        return null;
+      }
+      if (num > 0 && vclues[num]) {
+        return {
+          number: num,
+          i: i,
+          j: elemCol
+        };
+      }
+    }
+  }
+  return null;
+}
 
 function semiSelectWord($elem) {
   var clueNumber = lookUpClueNumber($elem);
@@ -206,7 +206,7 @@ function focused() {
 }
 
 /*
- * INITIALIZATION FUNCITONs
+ * INITIALIZATION FUNCITONS
  * Functions used to initialize the game, the crossword puzzle and the clues
  */
 
@@ -215,8 +215,7 @@ function buildCrosswordTable(puzzle) {
   var rows = puzzle.nRows;
   var cols = puzzle.nCols;
   var $crosswordTable = $('#crossword');
-  var i = 0;
-  var j = 0;
+  var i, j;
   var $newRow, $td, elem, id;
 
   $crosswordTable.empty();

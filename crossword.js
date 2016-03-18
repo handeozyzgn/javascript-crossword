@@ -219,9 +219,8 @@ function buildCrosswordTable(puzzle) {
   var $newRow, $td, elem, id;
 
   $crosswordTable.empty();
-  clueOrientation = 'h';
   // Set the in memroy board every time we build a new puzzle
-  board = puzzle.diagram.map(function(row) {
+  state.board = puzzle.diagram.map(function(row) {
     return row.split('');
   });
   /* Add 1 to rows and cols because we need an extra row and column for the
@@ -230,7 +229,6 @@ function buildCrosswordTable(puzzle) {
     $newRow = $('<tr></tr>');
     for (j = 0; j < cols + 1; j++) {
       id = (i - 1) + '-' + (j - 1);
-
       if (i === 0 && j === 0) {
         $newRow.append('<th></th>');
       } else if (i === 0) { // On the first row we number the columns
@@ -240,7 +238,7 @@ function buildCrosswordTable(puzzle) {
       } else { // Then we just add the crossword puzzle boxes
         elem = '<td id="' + id + '" class=" row-' + (i - 1) + ' col-' + (j - 1) + '" contentEditable="true"></td>';
         $td = $(elem).appendTo($newRow);
-        if (board[i - 1][j - 1] === '.') {
+        if (state.board[i - 1][j - 1] === '.') {
           $td.addClass('blacked-out');
           $td.attr('contentEditable', 'false');
         }
@@ -257,28 +255,27 @@ function buildCrosswordTable(puzzle) {
  */
 function populateClues() {
   var tableHeight = $('#crossword').height();
-  var headingHeight = $('#horizontal h2').outerHeight();
+  var headingHeight = $('#horizontal h2').outerHeight(true);
   var $horClueList = $('#horizontal-clues ul');
   var $vertClueList = $('#vertical-clues ul');
   var clueNumber, i, j;
 
+  $horClueList.empty();
+  $vertClueList.empty();
   $('#horizontal-clues').height(tableHeight - headingHeight);
   $('#vertical-clues').height(tableHeight - headingHeight);
-  //$('#puzzle-container').css('height', tableHeight);
 
-  for (i = 0; i < selectedPuzzle.nRows; i++) {
-    for (j = 0; j < selectedPuzzle.nCols; j++) {
-      clueNumber = selectedPuzzle.numbers[i][j];
-      if (selectedPuzzle.acrossClues[clueNumber]) {
-        $horClueList.append('<li id="hclue-' + clueNumber + '">' + clueNumber + ': ' + selectedPuzzle.acrossClues[clueNumber] + '</li>');
+  for (i = 0; i < state.selectedPuzzle.nRows; i++) {
+    for (j = 0; j < state.selectedPuzzle.nCols; j++) {
+      clueNumber = state.selectedPuzzle.numbers[i][j];
+      if (state.selectedPuzzle.acrossClues[clueNumber]) {
+        $horClueList.append('<li id="hclue-' + clueNumber + '">' + clueNumber + ': ' + state.selectedPuzzle.acrossClues[clueNumber] + '</li>');
       }
-      if (selectedPuzzle.downClues[clueNumber]) {
-        $vertClueList.append('<li id="vclue-' + clueNumber + '">' + clueNumber + ': ' + selectedPuzzle.downClues[clueNumber] + '</li>');
+      if (state.selectedPuzzle.downClues[clueNumber]) {
+        $vertClueList.append('<li id="vclue-' + clueNumber + '">' + clueNumber + ': ' + state.selectedPuzzle.downClues[clueNumber] + '</li>');
       }
     }
   }
-
-  $(currentClue).addClass('selected-clue');
 }
 
 /*
@@ -288,13 +285,13 @@ function populatePuzzleSelection(files) {
   var url, $select;
 
   $.each(files, function(i, file) {
-    url = host + 'puzzles/' + file;
+    url = state.host + 'puzzles/' + file;
     $.getJSON(url, function(data) {
-      puzzles.push(data);
+      state.puzzles.push(data);
       $select = $('select').append('<option value="' + i + '">' + file.split('.')[0] + '</option>');
       if (i === 0) {
-        selectedPuzzle = puzzles[$select.val()];
-        buildCrosswordTable(selectedPuzzle);
+        state.selectedPuzzle = state.puzzles[$select.val()];
+        buildCrosswordTable(state.selectedPuzzle);
         populateClues();
       }
     });
@@ -305,12 +302,12 @@ function initCrossword() {
   var files = [];
 
   $('select').change(function(event) {
-    selectedPuzzle = puzzles[event.target.value];
-    buildCrosswordTable(selectedPuzzle);
+    state.selectedPuzzle = state.puzzles[event.target.value];
+    buildCrosswordTable(state.selectedPuzzle);
   });
 
   // Fetch all the json files from our server
-  $.getJSON(host + 'puzzles/puzzle-list.json', function(data) {
+  $.getJSON(state.host + 'puzzles/puzzle-list.json', function(data) {
     files = data.files;
     populatePuzzleSelection(files);
   });
@@ -319,7 +316,6 @@ function initCrossword() {
 
   $(document).on('focusout', 'td', function() {
     $(this).removeClass('selected-box');
-    $(currentSelection).removeClass('selected');
   });
   /* We use keydown instead of keypress here because we also need to capture the
   arrow keys which aren't captured with all browsers by using keypress */

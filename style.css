@@ -33,16 +33,16 @@ ul {
 .semi-selected {
     background-color: grey;
 }
-td.selected-box, .selected-clue {
+td.selected-box, .highlighted {
     background-color: yellow;
 }
 td.cheated {
-    background-color: blue;
+    background-color: #0099FF;
 }
 td.wrong-letter {
-    background-color: red;
+    background-color: #CC5500;
 }
-.selected-clue {
+.highlighted {
     display: inline;
 }
 .blacked-out {

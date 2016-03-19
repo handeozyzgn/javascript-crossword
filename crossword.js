@@ -9,8 +9,16 @@ var state = {
   selectedPuzzle: null, // Holds le JSON file of the current puzzle being solved.
   orientation: 'h', // 'h' if we are solving an accross clue and 'v' if it's a down clue
   selectedCell: null, // The row or column currently selected
-  selectedClue: null
+  selectedClue: null,
+  solution: null
 };
+
+function getPosition($elem) {
+  return {
+    row: $elem.attr('id').split('-')[0],
+    col: $elem.attr('id').split('-')[1]
+  };
+}
 
 /*
  * Helper Functions
@@ -20,189 +28,165 @@ var state = {
  * The reason if for reusability of the function (see: semiSelectWord())
  */
 function lookUpClueNumber($elem) {
-  var i, j, num;
-  var elemRow = $elem.attr('id').split('_')[1];
-  var elemCol = $elem.attr('id').split('_')[2];
-  var number = state.selectedPuzzle.numbers;
-  var hclues = state.selectedPuzzle.acrossClues;
-  var vclues = state.selectedPuzzle.downClues;
+  var elemPos = getPosition($elem);
+  var i = elemPos.row;
+  var j = elemPos.col;
+  var result = {
+    hclueNumber: null,
+    vclueNumber: null
+  };
 
-  if (state.orientation === 'h') {
-    for (j = elemCol; j >= 0; j--) {
-      // Find first number, it will indicate the clue index we want
-      num = number[elemRow][j];
-      if (state.selectedPuzzle.diagram[elemRow][j] === '.') {
-        return null;
-      }
-      if (num > 0 && hclues[num]) {
-        return {
-          number: num,
-          i: elemRow,
-          j: j
-        };
-      }
-    }
-  } else if (state.orientation === 'v') {
-    for (i = elemRow; i >= 0; i--) {
-      // Find first number, it will indicate the clue index we want
-      num = number[i][elemCol];
-      if (state.selectedPuzzle.diagram[i][elemCol] === '.') {
-        return null;
-      }
-      if (num > 0 && vclues[num]) {
-        return {
-          number: num,
-          i: i,
-          j: elemCol
-        };
-      }
-    }
+  // look up the vertical word number
+  while ((i > 0) && (state.selectedPuzzle.diagram[i - 1][elemPos.col] !== '.')) {
+    i--; // Move up util we reach a blacked out box or the border
   }
-  return null;
+  // look up horizontal word number
+  while ((j > 0) && (state.selectedPuzzle.diagram[elemPos.row][j - 1] !== '.')) {
+    j--; // Move left util we reach a blacked out box or the border
+  }
+
+  result.hclueNumber = state.selectedPuzzle.numbers[elemPos.row][j] ? state.selectedPuzzle.numbers[elemPos.row][j] : null;
+  result.vclueNumber = state.selectedPuzzle.numbers[i][elemPos.col] ? state.selectedPuzzle.numbers[i][elemPos.col] : null;
+
+  return result;
 }
 
 function semiSelectWord($elem) {
-  var clueNumber = lookUpClueNumber($elem);
-  var row = clueNumber ? clueNumber.i + 1 : null;
-  var col = clueNumber ? clueNumber.j + 1 : null;
-  var nCols = state.selectedPuzzle.nCols;
-  var nRows = state.selectedPuzzle.nRows;
-  var i, id;
+  var clue_data = $elem.data('clue_data');
 
-  if (!row || !col) {
-    return;
+  $('.semi-selected').removeClass('semi-selected');
+  if (state.orientation === 'h' && clue_data.hclueNumber) {
+    $('.hclue-' + clue_data.hclueNumber).addClass('semi-selected');
+  } else if (state.orientation === 'v' && clue_data.vclueNumber) {
+    $('.vclue-' + clue_data.vclueNumber).addClass('semi-selected');
   }
+}
 
-  if (state.orientation === 'h') {
-    // Then we want to semi-select the whole row starting from the var row until we meet a blacked out cell
-    for (i = col; i <= nCols; i++) {
-      id = '#case_' + row + '_' + i;
-      if ($(id).hasClass('noLetter')) {
-        return;
-      }
-      $(id).addClass('semiSelected');
-    }
-  } else if (state.orientation === 'v') {
-    // Then we want to to semi-select the whole column starting from col until we meet a blacked out cell
-    for (i = row; i <= nRows; i++) {
-      id = '#case_' + i + '_' + col;
-      if ($(id).hasClass('noLetter')) {
-        return;
-      }
-      $(id).addClass('semiSelected');
-    }
+function highlightClue($elem) {
+  var hclue = $elem.data('clue_data').hclueNumber ? $elem.data('clue_data').hclueNumber : null;
+  var vclue = $elem.data('clue_data').vclueNumber ? $elem.data('clue_data').vclueNumber : null;
+
+  $('.highlighted').removeClass('highlighted');
+  if (state.orientation === 'h' && hclue) {
+    $('#hclue-' + hclue).addClass('highlighted');
+  } else if (state.orientation === 'v' && vclue) {
+    $('#vclue-' + vclue).addClass('highlighted');
   }
 }
 
 function setStyles($elem) {
-  $elem.addClass('selected');
-  $('.semiSelected').removeClass('semiSelected');
+  $elem.addClass('selected-box');
   semiSelectWord($elem);
-}
-
-function getPosition(cellId) {
-  return cellId.split('-').map(Number);
-}
-
-function idValid(board) {
-  // TODO
+  highlightClue($elem);
 }
 
 /*
  * Handles puzzle navigation using arrow keys and refocuses on new table cell
  * Returns: false if move was unsuccessful, true otherwise.
  */
-function move(direction, currentPos) {
+function move(direction, i, j) {
   var newId;
-  var initialPos = currentPos.slice();
-  // TODO: update currentSelection
-  $(currentSelection).removeClass('selected');
 
-  if (direction === 'up' && currentPos[0] > 0) {
-    currentPos[0]--;
-    newId = '#' + currentPos.join('-');
+  if (direction === 'up' && i > 0) {
+    i--;
+    newId = '#' + i + '-' + j;
     if (!$(newId).hasClass('blacked-out')) {
       $(newId).focus();
     }
-  } else if (direction === 'down' && currentPos[0] < selectedPuzzle.nRows - 1) {
-    currentPos[0]++;
-    newId = '#' + currentPos.join('-');
+  } else if (direction === 'down' && i < state.selectedPuzzle.nRows - 1) {
+    i++;
+    newId = '#' + i + '-' + j;
     if (!$(newId).hasClass('blacked-out')) {
       $(newId).focus();
     }
-  } else if (direction === 'left' && currentPos[1] > 0) {
-    currentPos[1]--;
-    newId = '#' + currentPos.join('-');
+  } else if (direction === 'left' && j > 0) {
+    j--;
+    newId = '#' + i + '-' + j;
     if (!$(newId).hasClass('blacked-out')) {
       $(newId).focus();
     }
-  } else if (direction === 'right' && currentPos[1] < selectedPuzzle.nCols - 1) {
-    currentPos[1]++;
-    newId = '#' + currentPos.join('-');
+  } else if (direction === 'right' && j < state.selectedPuzzle.nCols - 1) {
+    j++;
+    newId = '#' + i + '-' + j;
     if (!$(newId).hasClass('blacked-out')) {
       $(newId).focus();
     }
   }
 }
 
-function toggleOrientation(position) {
-  // TODO: update the current clue value if there is a clue associated with
-  // the row or column
-  switch (clueOrientation) {
+function toggleOrientation($elem) {
+  switch (state.orientation) {
     case 'h':
-      clueOrientation = 'v';
+      state.orientation = 'v';
       break;
     case 'v':
-      clueOrientation = 'h';
+      state.orientation = 'h';
       break;
     default:
   }
+  setStyles($elem);
 }
 
-function processKey($elem, position, key) {
-  $elem.text(key);
-  board[position[0]][position[1]] = String.fromCharCode(event.which);
-
-  if (clueOrientation === 'v') {
-    move('down', position);
-  } else if (clueOrientation === 'h') {
-    move('right', position);
-  }
-}
-
-function keyPressed(event) {
+function processKey(event) {
   var $elem = $(this);
-  var position = getPosition($elem.attr('id')); // Position is an array [i index, j index]
-  var key = event.which.toString();
+  var keyCode = event.which;
+  var pos = getPosition($elem);
 
   event.preventDefault();
+  console.log('KEYPRESS');
+  if (keyCode >= 97 && keyCode <= 122 && !$elem.hasClass('cheated')) {
+    // It's a letter
+    $elem.text(String.fromCharCode(keyCode).toUpperCase());
+    // Update in memeory game state
+    state.board[pos.row][pos.col] = String.fromCharCode(keyCode).toUpperCase();
+    if ($elem.text() !== state.solution[pos.row][pos.col]) {
+      $elem.addClass('wrong-letter');
+    } else {
+      $elem.removeClass('wrong-letter');
+    }
+  } else if (String.fromCharCode(keyCode) === '?') { // question mark
+    $elem.text(state.solution[pos.row][pos.col]);
+    state.board[pos.row][pos.col] = state.solution[pos.row][pos.col];
+    $elem.removeClass('wrong-letter');
+    $elem.addClass('cheated');
+  }
+  state.orientation === 'h' ? move('right', pos.row, pos.col) : move('down', pos.row, pos.col);
+
+}
+
+function moving(event) {
+  var $elem = $(this);
+  var position = getPosition($elem); // Position is an array [i index, j index]
+  var key = event.which.toString();
+
   switch (key) {
     case '38':
-      move('up', position);
+      move('up', position.row, position.col);
+      console.log('UP');
+      event.preventDefault();
       break;
     case '40':
-      move('down', position);
+      move('down', position.row, position.col);
+      event.preventDefault();
       break;
     case '37':
-      move('left', position);
+      move('left', position.row, position.col);
+      event.preventDefault();
       break;
     case '39':
-      move('right', position);
+      move('right', position.row, position.col);
+      event.preventDefault();
       break;
     case '32': // space bar
-      toggleOrientation(position);
+      toggleOrientation($elem);
+      event.preventDefault();
       break;
     default:
-      processKey($elem, position, String.fromCharCode(event.which));
   }
 }
 
 function focused() {
-  var $elem = $(this);
-  var pos = getPosition($elem.attr('id'));
-
-  $elem.addClass('selected-box');
-  setStyles(pos);
+  setStyles($(this));
 }
 
 /*
@@ -215,10 +199,10 @@ function buildCrosswordTable(puzzle) {
   var rows = puzzle.nRows;
   var cols = puzzle.nCols;
   var $crosswordTable = $('#crossword');
-  var i, j;
-  var $newRow, $td, elem, id;
+  var i, j, $newRow, $td, elem, id, clues;
 
   $crosswordTable.empty();
+  state.solution = puzzle.solution;
   // Set the in memroy board every time we build a new puzzle
   state.board = puzzle.diagram.map(function(row) {
     return row.split('');
@@ -239,8 +223,17 @@ function buildCrosswordTable(puzzle) {
         elem = '<td id="' + id + '" class=" row-' + (i - 1) + ' col-' + (j - 1) + '" contentEditable="true"></td>';
         $td = $(elem).appendTo($newRow);
         if (state.board[i - 1][j - 1] === '.') {
-          $td.addClass('blacked-out');
-          $td.attr('contentEditable', 'false');
+          $td = $td.addClass('blacked-out');
+          $td = $td.attr('contentEditable', 'false');
+        } else {
+          clues = lookUpClueNumber($td);
+          $td.data('clue_data', clues);
+          if (clues.hclueNumber) {
+            $td = $td.addClass('hclue-' + clues.hclueNumber);
+          }
+          if (clues.vclueNumber) {
+            $td = $td.addClass('vclue-' + clues.vclueNumber);
+          }
         }
       }
     }
@@ -319,7 +312,8 @@ function initCrossword() {
   });
   /* We use keydown instead of keypress here because we also need to capture the
   arrow keys which aren't captured with all browsers by using keypress */
-  $(document).on('keydown', 'td', keyPressed);
+  $(document).on('keydown', 'td', moving);
+  $(document).on('keypress', 'td', processKey);
 }
 
 $(document).ready(function() {

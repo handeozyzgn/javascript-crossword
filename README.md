@@ -11,3 +11,11 @@ Because of the use of ajax to fetch the crossword puzzles, you need to run a ser
     $ npm start
 
 This will open your default browser to the application page.
+
+
+## TODO
+
+- Add instructions
+- Handle backspace for better usability
+- Clicking on a definition should bring cursor to the beginning of the word in the crossword
+- Definition should appear on top of the puzzle for better visibility.
